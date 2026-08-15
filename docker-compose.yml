@@ -1,0 +1,115 @@
+version: "3.9"
+
+services:
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: angular-client
+    ports:
+      - "8081:8080"
+      - "8443:8443"
+    depends_on:
+      - gateway
+    volumes:
+      - media-data:/usr/share/nginx/html/uploads:ro
+    restart: unless-stopped
+
+  gateway:
+    build: ./gateway_service
+    container_name: gateway-service
+    ports:
+      - "8089:8089"
+    depends_on:
+      - user-service
+      - product-service
+      - media-service
+    environment:
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
+      USER_SERVICE_URL: ${USER_SERVICE_URL}
+      PRODUCT_SERVICE_URL: ${PRODUCT_SERVICE_URL}
+      MEDIA_SERVICE_URL: ${MEDIA_SERVICE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      SSL_KEYSTORE_PASSWORD: ${SSL_KEYSTORE_PASSWORD}
+
+  user-service:
+    build: ./user_service
+    container_name: user-service
+    depends_on:
+      - mongodb
+      - redis
+      - kafka
+    expose:
+      - "8081"
+    environment:
+      SPRING_DATA_MONGODB_URI: ${USER_DB_URI}
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_HOST}
+      JWT_SECRET: ${JWT_SECRET}
+
+  product-service:
+    build: ./product_service
+    container_name: product-service
+    depends_on:
+      - mongodb
+      - redis
+      - kafka
+    expose:
+      - "8082"
+    environment:
+      SPRING_DATA_MONGODB_URI: ${PRODUCT_DB_URI}
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_HOST}
+      MEDIA_SERVICE_URL: ${MEDIA_SERVICE_URL}
+
+  media-service:
+    build: ./media_service
+    container_name: media-service
+    expose:
+      - "8083"
+    volumes:
+      - media-data:/app/uploads
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID}
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+volumes:
+  mongo-data:
+  redis-data:
+  media-data:

@@ -1,0 +1,67 @@
+server:
+  port: 8089
+  ssl:
+    key-store: classpath:keystore.p12
+    key-store-password: ${SSL_KEYSTORE_PASSWORD}
+    key-store-type: PKCS12
+    key-alias: gateway
+
+spring:
+  application:
+    name: gateway-service
+
+  codec:
+    max-in-memory-size: 20MB
+
+  cloud:
+    gateway:
+      httpclient:
+        ssl:
+          useInsecureTrustManager: true
+          handshake-timeout: 10000ms
+      
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "https://localhost:8443"
+              - "https://localhost:4200"
+              - "http://localhost:8080"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+      routes:
+        - id: user-service
+          uri: ${USER_SERVICE_URL}
+          predicates:
+            - Path=/api/auth/**
+
+        - id: product-service
+          uri: ${PRODUCT_SERVICE_URL}
+          predicates:
+            - Path=/api/products/**
+
+        - id: media-service
+          uri: ${MEDIA_SERVICE_URL}
+          predicates:
+            - Path=/api/media/**
+
+        - id: media_uploads
+          uri: ${MEDIA_SERVICE_URL}
+          predicates:
+            - Path=/api/uploads/**
+
+jwt:
+  secret: ${JWT_SECRET}
+  
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    reactor.netty.http.client: INFO
