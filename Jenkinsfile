@@ -107,10 +107,76 @@ pipeline {
 
         CI=true npx ng test \
           --watch=false \
+          --code-coverage \
           --browsers=ChromeHeadlessCI
         '''
     }
 }
+        
+        stage('SonarQube Analysis') {
+    steps {
+        withSonarQubeEnv('SonarQube') {
+            withCredentials([
+                string(
+                    credentialsId: 'sonar-token',
+                    variable: 'SONAR_TOKEN'
+                )
+            ]) {
+                sh '''
+                    echo "🔍 Starting SonarQube analysis..."
+
+                    cd user_service
+                    ./mvnw clean verify \
+                      org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                      -Dsonar.projectKey=safe-zone-user \
+                      -Dsonar.projectName="safe-zone-user" \
+                      -Dsonar.host.url="$SONAR_HOST_URL" \
+                      -Dsonar.token="$SONAR_TOKEN"
+
+                    cd ../product_service
+                    ./mvnw clean verify \
+                      org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                      -Dsonar.projectKey=safe-zone-product \
+                      -Dsonar.projectName="safe-zone-product" \
+                      -Dsonar.host.url="$SONAR_HOST_URL" \
+                      -Dsonar.token="$SONAR_TOKEN"
+
+                    cd ../gateway_service
+                    ./mvnw clean verify \
+                      org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                      -Dsonar.projectKey=safe-zone-gateway \
+                      -Dsonar.projectName="safe-zone-gateway" \
+                      -Dsonar.host.url="$SONAR_HOST_URL" \
+                      -Dsonar.token="$SONAR_TOKEN"
+
+                    cd ../media_service
+                    ./mvnw clean verify \
+                      org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                      -Dsonar.projectKey=safe-zone-media \
+                      -Dsonar.projectName="safe-zone-media" \
+                      -Dsonar.host.url="$SONAR_HOST_URL" \
+                      -Dsonar.token="$SONAR_TOKEN"
+                '''
+            }
+        }
+    }
+}
+
+
+        // =========================================================
+        // QUALITY GATE
+        // =========================================================
+
+        stage('Quality Gate') {
+
+            steps {
+
+                timeout(time: 10, unit: 'MINUTES') {
+
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
 
         
         stage('Docker Build') {
