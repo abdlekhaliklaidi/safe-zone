@@ -9,6 +9,10 @@ pipeline {
 
     stages {
 
+        // =========================================================
+        // CHECKOUT
+        // =========================================================
+
         stage('Checkout') {
             steps {
                 checkout scm
@@ -16,318 +20,598 @@ pipeline {
         }
 
 
+        // =========================================================
+        // BACKEND TESTS
+        // =========================================================
 
         stage('Backend Tests') {
 
             parallel {
 
+                // -------------------------------------------------
+                // USER SERVICE
+                // -------------------------------------------------
+
                 stage('User Service') {
+
                     environment {
                         JWT_SECRET = 'test-secret-key-test-secret-key-test-secret-key-123456'
-                        SPRING_DATA_MONGODB_URI = 'mongodb://localhost/test'
-                        SPRING_KAFKA_BOOTSTRAP_SERVERS = 'localhost:9092'
-                        SPRING_DATA_REDIS_HOST = 'localhost'
+
+                        // Docker network
+                        SPRING_DATA_MONGODB_URI = 'mongodb://mongodb:27017/test'
+                        SPRING_KAFKA_BOOTSTRAP_SERVERS = 'kafka:9092'
+                        SPRING_DATA_REDIS_HOST = 'redis'
                     }
+
                     steps {
                         sh '''
-                        cd user_service
-                        chmod +x mvnw
-                        ./mvnw test
+                            cd user_service
+
+                            chmod +x mvnw
+
+                            echo "🧪 Testing User Service..."
+
+                            ./mvnw test
                         '''
                     }
                 }
 
+
+                // -------------------------------------------------
+                // PRODUCT SERVICE
+                // -------------------------------------------------
 
                 stage('Product Service') {
+
                     environment {
                         MEDIA_SERVICE_URL = 'http://media-service:8083'
-                        SPRING_DATA_MONGODB_URI = 'mongodb://localhost/test'
-                        SPRING_KAFKA_BOOTSTRAP_SERVERS = 'localhost:9092'
+
+                        // Docker network
+                        SPRING_DATA_MONGODB_URI = 'mongodb://mongodb:27017/test'
+                        SPRING_KAFKA_BOOTSTRAP_SERVERS = 'kafka:9092'
                     }
+
                     steps {
                         sh '''
-                        cd product_service
-                        chmod +x mvnw
-                        ./mvnw test
+                            cd product_service
+
+                            chmod +x mvnw
+
+                            echo "🧪 Testing Product Service..."
+
+                            ./mvnw test
                         '''
                     }
                 }
 
 
+                // -------------------------------------------------
+                // GATEWAY SERVICE
+                // -------------------------------------------------
+
                 stage('Gateway Service') {
+
                     environment {
+
                         JWT_SECRET = 'test-secret-key-test-secret-key-test-secret-key-123456'
                         SSL_KEYSTORE_PASSWORD = 'changeit'
 
-                        USER_SERVICE_URL = 'http://localhost:8081'
-                        PRODUCT_SERVICE_URL = 'http://localhost:8082'
-                        MEDIA_SERVICE_URL = 'http://localhost:8083'
+                        // Docker network
+                        USER_SERVICE_URL = 'http://user-service:8081'
+                        PRODUCT_SERVICE_URL = 'http://product-service:8082'
+                        MEDIA_SERVICE_URL = 'http://media-service:8083'
                     }
+
                     steps {
                         sh '''
-                        cd gateway_service
-                        chmod +x mvnw
-                        ./mvnw test
+                            cd gateway_service
+
+                            chmod +x mvnw
+
+                            echo "🧪 Testing Gateway Service..."
+
+                            ./mvnw test
                         '''
                     }
                 }
 
+
+                // -------------------------------------------------
+                // MEDIA SERVICE
+                // -------------------------------------------------
 
                 stage('Media Service') {
+
+                    environment {
+
+                        // Docker network
+                        SPRING_DATA_MONGODB_URI = 'mongodb://mongodb:27017/test'
+                        SPRING_KAFKA_BOOTSTRAP_SERVERS = 'kafka:9092'
+                    }
+
                     steps {
                         sh '''
-                        cd media_service
-                        ./mvnw test
+                            cd media_service
+
+                            chmod +x mvnw
+
+                            echo "🧪 Testing Media Service..."
+
+                            ./mvnw test
                         '''
                     }
                 }
-
             }
         }
 
+
+        // =========================================================
+        // FRONTEND TEST
+        // =========================================================
 
         stage('Frontend Test') {
-    agent {
-        docker {
-            image 'node:20-bookworm'
-            reuseNode true
-        }
-    }
 
-    steps {
-        sh '''
-        apt-get update
-        apt-get install -y chromium
+            agent {
+                docker {
+                    image 'node:20-bookworm'
+                    reuseNode true
+                }
+            }
 
-        export CHROME_BIN=/usr/bin/chromium
+            steps {
 
-        cd client
-
-        npm ci
-
-        CI=true npx ng test \
-          --watch=false \
-          --code-coverage \
-          --browsers=ChromeHeadlessCI
-        '''
-    }
-}
-
-    
-   stage('SonarQube Analysis') {
-    steps {
-        withSonarQubeEnv('SonarQube') {
-            withCredentials([
-                string(
-                    credentialsId: 'sonar-token',
-                    variable: 'SONAR_TOKEN'
-                )
-            ]) {
                 sh '''
-                    echo "🔍 Starting SonarQube analysis..."
+                    set -e
 
-                    cd user_service
-                    ./mvnw clean verify \
-                      org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-                      -Dsonar.projectKey=safe-zone-user \
-                      -Dsonar.projectName="safe-zone-user" \
-                      -Dsonar.host.url="$SONAR_HOST_URL" \
-                      -Dsonar.token="$SONAR_TOKEN"
+                    echo "🧪 Installing Chromium..."
 
-                    cd ../product_service
-                    ./mvnw clean verify \
-                      org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-                      -Dsonar.projectKey=safe-zone-product \
-                      -Dsonar.projectName="safe-zone-product" \
-                      -Dsonar.host.url="$SONAR_HOST_URL" \
-                      -Dsonar.token="$SONAR_TOKEN"
+                    apt-get update
+                    apt-get install -y chromium
 
-                    cd ../gateway_service
-                    ./mvnw clean verify \
-                      org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-                      -Dsonar.projectKey=safe-zone-gateway \
-                      -Dsonar.projectName="safe-zone-gateway" \
-                      -Dsonar.host.url="$SONAR_HOST_URL" \
-                      -Dsonar.token="$SONAR_TOKEN"
+                    export CHROME_BIN=/usr/bin/chromium
 
-                    cd ../media_service
-                    ./mvnw clean verify \
-                      org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-                      -Dsonar.projectKey=safe-zone-media \
-                      -Dsonar.projectName="safe-zone-media" \
-                      -Dsonar.host.url="$SONAR_HOST_URL" \
-                      -Dsonar.token="$SONAR_TOKEN"
+                    cd client
+
+                    echo "📦 Installing npm dependencies..."
+
+                    npm ci
+
+                    echo "🧪 Running Angular tests..."
+
+                    CI=true npx ng test \
+                        --watch=false \
+                        --code-coverage \
+                        --browsers=ChromeHeadlessCI
                 '''
             }
         }
-    }
-}
 
-stage('Quality Gate') {
-    steps {
-        timeout(time: 10, unit: 'MINUTES') {
-            waitForQualityGate abortPipeline: true
+
+        // =========================================================
+        // SONARQUBE ANALYSIS
+        // =========================================================
+
+        stage('SonarQube Analysis') {
+
+            steps {
+
+                withSonarQubeEnv('SonarQube') {
+
+                    withCredentials([
+                        string(
+                            credentialsId: 'sonar-token',
+                            variable: 'SONAR_TOKEN'
+                        )
+                    ]) {
+
+                        sh '''
+                            set -e
+
+                            echo "🔍 Starting SonarQube analysis..."
+
+
+                            # -----------------------------------------
+                            # USER SERVICE
+                            # -----------------------------------------
+
+                            cd user_service
+
+                            ./mvnw sonar:sonar \
+                                -Dsonar.projectKey=safe-zone-user \
+                                -Dsonar.projectName="safe-zone-user" \
+                                -Dsonar.host.url="$SONAR_HOST_URL" \
+                                -Dsonar.token="$SONAR_TOKEN"
+
+
+                            # -----------------------------------------
+                            # PRODUCT SERVICE
+                            # -----------------------------------------
+
+                            cd ../product_service
+
+                            ./mvnw sonar:sonar \
+                                -Dsonar.projectKey=safe-zone-product \
+                                -Dsonar.projectName="safe-zone-product" \
+                                -Dsonar.host.url="$SONAR_HOST_URL" \
+                                -Dsonar.token="$SONAR_TOKEN"
+
+
+                            # -----------------------------------------
+                            # GATEWAY SERVICE
+                            # -----------------------------------------
+
+                            cd ../gateway_service
+
+                            ./mvnw sonar:sonar \
+                                -Dsonar.projectKey=safe-zone-gateway \
+                                -Dsonar.projectName="safe-zone-gateway" \
+                                -Dsonar.host.url="$SONAR_HOST_URL" \
+                                -Dsonar.token="$SONAR_TOKEN"
+
+
+                            # -----------------------------------------
+                            # MEDIA SERVICE
+                            # -----------------------------------------
+
+                            cd ../media_service
+
+                            ./mvnw sonar:sonar \
+                                -Dsonar.projectKey=safe-zone-media \
+                                -Dsonar.projectName="safe-zone-media" \
+                                -Dsonar.host.url="$SONAR_HOST_URL" \
+                                -Dsonar.token="$SONAR_TOKEN"
+
+
+                            echo "✅ SonarQube analysis completed."
+                        '''
+                    }
+                }
+            }
         }
-    }
-}
+
+
+        // =========================================================
+        // QUALITY GATE
+        // =========================================================
+
+        stage('Quality Gate') {
+
+            steps {
+
+                timeout(time: 10, unit: 'MINUTES') {
+
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+
+        // =========================================================
+        // DOCKER BUILD
+        // =========================================================
 
         stage('Docker Build') {
-    steps {
-        sh '''
-        cat > .env <<EOF
-        
-    JWT_SECRET = credentials('jwt-secret')
-    SSL_KEYSTORE_PASSWORD = credentials('ssl-keystore-password')
-    KAFKA_CLUSTER_ID = credentials('kafka-cluster-id')
 
-    USER_DB_URI = credentials('user-db-uri')
-    PRODUCT_DB_URI = credentials('product-db-uri')
+            environment {
 
-    REDIS_HOST = credentials('redis-host')
-    KAFKA_HOST = credentials('kafka-host')
+                JWT_SECRET = credentials('jwt-secret')
 
-    MEDIA_SERVICE_URL = credentials('media-service-url')
-    USER_SERVICE_URL = credentials('user-service-url')
-    PRODUCT_SERVICE_URL = credentials('product-service-url')
+                SSL_KEYSTORE_PASSWORD =
+                    credentials('ssl-keystore-password')
 
+                KAFKA_CLUSTER_ID =
+                    credentials('kafka-cluster-id')
+
+                USER_DB_URI =
+                    credentials('user-db-uri')
+
+                PRODUCT_DB_URI =
+                    credentials('product-db-uri')
+
+                REDIS_HOST =
+                    credentials('redis-host')
+
+                KAFKA_HOST =
+                    credentials('kafka-host')
+
+                MEDIA_SERVICE_URL =
+                    credentials('media-service-url')
+
+                USER_SERVICE_URL =
+                    credentials('user-service-url')
+
+                PRODUCT_SERVICE_URL =
+                    credentials('product-service-url')
+            }
+
+            steps {
+
+                sh '''
+                    set -e
+
+                    echo "🐳 Preparing Docker environment..."
+
+                    cat > .env <<EOF
+JWT_SECRET=${JWT_SECRET}
+SSL_KEYSTORE_PASSWORD=${SSL_KEYSTORE_PASSWORD}
+KAFKA_CLUSTER_ID=${KAFKA_CLUSTER_ID}
+
+USER_DB_URI=${USER_DB_URI}
+PRODUCT_DB_URI=${PRODUCT_DB_URI}
+
+REDIS_HOST=${REDIS_HOST}
+KAFKA_HOST=${KAFKA_HOST}
+
+MEDIA_SERVICE_URL=${MEDIA_SERVICE_URL}
+USER_SERVICE_URL=${USER_SERVICE_URL}
+PRODUCT_SERVICE_URL=${PRODUCT_SERVICE_URL}
 EOF
 
-        docker compose --env-file .env build
-        '''
-    }
-}
-        
+                    echo "🐳 Building Docker images..."
+
+                    docker compose --env-file .env build
+
+                    echo "✅ Docker build completed."
+                '''
+            }
+        }
+
+
+        // =========================================================
+        // BACKUP
+        // =========================================================
+
         stage('Backup Before Deploy') {
-    steps {
-        sh '''
-        echo "📦 Creating deployment backup..."
 
-        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+            steps {
 
-        mkdir -p backups/$TIMESTAMP
+                sh '''
+                    set -e
 
-        echo $TIMESTAMP > backups/latest
+                    echo "📦 Creating deployment backup..."
 
-        # Backup env
-        cp .env backups/$TIMESTAMP/
+                    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
-        # Backup running docker images
-        docker compose ps -q | while read container
-        do
-            IMAGE=$(docker inspect --format='{{.Config.Image}}' $container)
-            docker save $IMAGE -o backups/$TIMESTAMP/$(echo $IMAGE | tr "/:" "_").tar
-        done
+                    mkdir -p backups/$TIMESTAMP
+
+                    echo "$TIMESTAMP" > backups/latest
 
 
-        # MongoDB backup
-        docker exec mongodb mongodump \
-            --archive=/tmp/mongo_backup.archive \
-            --gzip
+                    # -----------------------------------------
+                    # Backup .env
+                    # -----------------------------------------
 
-        docker cp mongodb:/tmp/mongo_backup.archive \
-            backups/$TIMESTAMP/
+                    cp .env backups/$TIMESTAMP/
 
 
-        echo "✅ Backup stored in backups/$TIMESTAMP"
-        '''
-    }
-}
+                    # -----------------------------------------
+                    # Backup Docker images
+                    # -----------------------------------------
+
+                    docker compose ps -q | while read container
+                    do
+
+                        IMAGE=$(docker inspect \
+                            --format='{{.Config.Image}}' \
+                            "$container")
+
+                        if [ -n "$IMAGE" ]; then
+
+                            docker save "$IMAGE" \
+                                -o "backups/$TIMESTAMP/$(echo "$IMAGE" | tr "/:" "_").tar"
+
+                        fi
+
+                    done
+
+
+                    # -----------------------------------------
+                    # MongoDB backup
+                    # -----------------------------------------
+
+                    echo "📦 Backing up MongoDB..."
+
+                    docker exec mongodb mongodump \
+                        --archive=/tmp/mongo_backup.archive \
+                        --gzip
+
+
+                    docker cp \
+                        mongodb:/tmp/mongo_backup.archive \
+                        backups/$TIMESTAMP/
+
+
+                    echo "✅ Backup stored in backups/$TIMESTAMP"
+                '''
+            }
+        }
+
+
+        // =========================================================
+        // DEPLOY
+        // =========================================================
 
         stage('Deploy') {
-    steps {
-        script {
 
-            try {
+            steps {
 
-                sh '''
-                echo "🚀 Deploying new version..."
+                script {
 
-                docker compose --env-file .env down
+                    try {
 
-                docker compose --env-file .env up -d
+                        sh '''
+                            set -e
 
-                sleep 30
+                            echo "🚀 Deploying new version..."
 
-                docker compose ps
-                '''
+                            docker compose \
+                                --env-file .env \
+                                down
 
-            } catch (err) {
+                            docker compose \
+                                --env-file .env \
+                                up -d
 
-                echo "❌ Deployment failed. Starting rollback..."
+                            echo "⏳ Waiting for services..."
 
-                sh '''
-                TIMESTAMP=$(cat backups/latest)
+                            sleep 30
 
-                echo "Restoring backup $TIMESTAMP"
+                            docker compose ps
 
-                docker compose down
+                            echo "✅ Deployment completed."
+                        '''
 
-                # Restore previous images
-                for IMAGE in backups/$TIMESTAMP/*.tar
-                do
-                    docker load -i "$IMAGE"
-                done
+                    }
 
-                # Start MongoDB so it can accept restore
-                docker compose up -d mongodb
+                    catch (err) {
 
-                until docker exec mongodb mongosh --eval "db.adminCommand('ping')" >/dev/null 2>&1
-                do
-                    echo "Waiting for MongoDB..."
-                    sleep 5
-                done
+                        echo "❌ Deployment failed. Starting rollback..."
 
-                # Restore database
-                docker cp backups/$TIMESTAMP/mongo_backup.archive \
-                    mongodb:/tmp/mongo_backup.archive
 
-                docker exec mongodb mongorestore \
-                    --archive=/tmp/mongo_backup.archive \
-                    --gzip \
-                    --drop
+                        sh '''
+                            set -e
 
-                # Restore environment
-                cp backups/$TIMESTAMP/.env .env
+                            TIMESTAMP=$(cat backups/latest)
 
-                # Start previous version
-                docker compose --env-file .env up -d
+                            echo "🔄 Restoring backup: $TIMESTAMP"
 
-                echo "✅ Rollback completed"
-                '''
 
-                throw err
+                            # -----------------------------------------
+                            # Stop current deployment
+                            # -----------------------------------------
+
+                            docker compose down
+
+
+                            # -----------------------------------------
+                            # Restore Docker images
+                            # -----------------------------------------
+
+                            for IMAGE in backups/$TIMESTAMP/*.tar
+                            do
+
+                                if [ -f "$IMAGE" ]; then
+
+                                    docker load -i "$IMAGE"
+
+                                fi
+
+                            done
+
+
+                            # -----------------------------------------
+                            # Start MongoDB
+                            # -----------------------------------------
+
+                            docker compose up -d mongodb
+
+
+                            echo "⏳ Waiting for MongoDB..."
+
+
+                            until docker exec mongodb \
+                                mongosh \
+                                --eval "db.adminCommand('ping')" \
+                                >/dev/null 2>&1
+
+                            do
+
+                                echo "Waiting for MongoDB..."
+
+                                sleep 5
+
+                            done
+
+
+                            # -----------------------------------------
+                            # Restore MongoDB
+                            # -----------------------------------------
+
+                            docker cp \
+                                backups/$TIMESTAMP/mongo_backup.archive \
+                                mongodb:/tmp/mongo_backup.archive
+
+
+                            docker exec mongodb \
+                                mongorestore \
+                                --archive=/tmp/mongo_backup.archive \
+                                --gzip \
+                                --drop
+
+
+                            # -----------------------------------------
+                            # Restore .env
+                            # -----------------------------------------
+
+                            cp \
+                                backups/$TIMESTAMP/.env \
+                                .env
+
+
+                            # -----------------------------------------
+                            # Start previous version
+                            # -----------------------------------------
+
+                            docker compose \
+                                --env-file .env \
+                                up -d
+
+
+                            echo "✅ Rollback completed."
+                        '''
+
+
+                        throw err
+                    }
+                }
             }
         }
     }
-}
 
-    }
 
+    // =============================================================
+    // POST ACTIONS
+    // =============================================================
 
     post {
 
         success {
+
             echo "🚀 CI/CD SUCCESS"
-             script {
+
+            script {
+
                 mail(
                     to: 'abdlekhaliklaidi@gmail.com',
                     subject: "✅ SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                    body: "Build passed.\nLogs: ${env.BUILD_URL}"
+                    body: """Build passed successfully.
+
+Job: ${env.JOB_NAME}
+Build: #${env.BUILD_NUMBER}
+Logs: ${env.BUILD_URL}
+"""
                 )
             }
         }
 
+
         failure {
+
             echo "❌ CI/CD FAILED"
-             script {
+
+            script {
+
                 mail(
                     to: 'abdlekhaliklaidi@gmail.com',
                     subject: "❌ FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                    body: "Build failed.\nLogs: ${env.BUILD_URL}"
+                    body: """Build failed.
+
+Job: ${env.JOB_NAME}
+Build: #${env.BUILD_NUMBER}
+Logs: ${env.BUILD_URL}
+"""
                 )
             }
         }
-
     }
-
 }
