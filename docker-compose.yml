@@ -109,7 +109,21 @@ services:
     volumes:
       - redis-data:/data
 
+  sonarqube:
+    image: sonarqube:community
+    container_name: sonarqube
+    ports:
+      - "9000:9000"
+    volumes:
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-logs:/opt/sonarqube/logs
+      - sonarqube-extensions:/opt/sonarqube/extensions
+    restart: unless-stopped
+
 volumes:
   mongo-data:
   redis-data:
   media-data:
+  sonarqube-data:
+  sonarqube-logs:
+  sonarqube-extensions:

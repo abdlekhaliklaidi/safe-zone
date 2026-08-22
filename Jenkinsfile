@@ -107,12 +107,45 @@ pipeline {
 
         CI=true npx ng test \
           --watch=false \
+          --code-coverage \
           --browsers=ChromeHeadlessCI
         '''
     }
 }
 
-        
+    
+   stage('SonarQube Analysis') {
+    steps {
+        withSonarQubeEnv('SonarQube') {
+            withCredentials([
+                string(
+                    credentialsId: 'sonar-token',
+                    variable: 'SONAR_TOKEN'
+                )
+            ]) {
+                sh '''
+                    echo "🔍 Starting SonarQube analysis..."
+
+                    docker run --rm \
+                        --network mr-jenk_default \
+                        -e SONAR_HOST_URL=http://sonarqube:9000 \
+                        -e SONAR_TOKEN="$SONAR_TOKEN" \
+                        -v "$WORKSPACE:/usr/src" \
+                        sonarsource/sonar-scanner-cli
+                '''
+            }
+        }
+    }
+}
+
+stage('Quality Gate') {
+    steps {
+        timeout(time: 10, unit: 'MINUTES') {
+            waitForQualityGate abortPipeline: true
+        }
+    }
+}
+
         stage('Docker Build') {
     steps {
         sh '''
