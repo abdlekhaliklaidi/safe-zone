@@ -24,7 +24,7 @@ pipeline {
                 stage('User Service') {
                     environment {
                         JWT_SECRET = 'test-secret-key-test-secret-key-test-secret-key-123456'
-                        SPRING_DATA_MONGODB_URI = 'mongodb://mongodb:27017/test'
+                        SPRING_DATA_MONGODB_URI = 'mongodb://localhost/test'
                         SPRING_KAFKA_BOOTSTRAP_SERVERS = 'localhost:9092'
                         SPRING_DATA_REDIS_HOST = 'localhost'
                     }
@@ -41,7 +41,7 @@ pipeline {
                 stage('Product Service') {
                     environment {
                         MEDIA_SERVICE_URL = 'http://media-service:8083'
-                        SPRING_DATA_MONGODB_URI = 'mongodb://mongodb:27017/test'
+                        SPRING_DATA_MONGODB_URI = 'mongodb://localhost/test'
                         SPRING_KAFKA_BOOTSTRAP_SERVERS = 'localhost:9092'
                     }
                     steps {
@@ -113,7 +113,7 @@ pipeline {
     }
 }
         
-        stage('SonarQube Analysis') {
+       stage('SonarQube Analysis') {
     steps {
         withSonarQubeEnv('SonarQube') {
             withCredentials([
@@ -126,32 +126,28 @@ pipeline {
                     echo "🔍 Starting SonarQube analysis..."
 
                     cd user_service
-                    ./mvnw clean verify \
-                      org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                    ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
                       -Dsonar.projectKey=safe-zone-user \
                       -Dsonar.projectName="safe-zone-user" \
                       -Dsonar.host.url="$SONAR_HOST_URL" \
                       -Dsonar.token="$SONAR_TOKEN"
 
                     cd ../product_service
-                    ./mvnw clean verify \
-                      org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                    ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
                       -Dsonar.projectKey=safe-zone-product \
                       -Dsonar.projectName="safe-zone-product" \
                       -Dsonar.host.url="$SONAR_HOST_URL" \
                       -Dsonar.token="$SONAR_TOKEN"
 
                     cd ../gateway_service
-                    ./mvnw clean verify \
-                      org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                    ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
                       -Dsonar.projectKey=safe-zone-gateway \
                       -Dsonar.projectName="safe-zone-gateway" \
                       -Dsonar.host.url="$SONAR_HOST_URL" \
                       -Dsonar.token="$SONAR_TOKEN"
 
                     cd ../media_service
-                    ./mvnw clean verify \
-                      org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                    ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
                       -Dsonar.projectKey=safe-zone-media \
                       -Dsonar.projectName="safe-zone-media" \
                       -Dsonar.host.url="$SONAR_HOST_URL" \
