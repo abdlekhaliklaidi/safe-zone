@@ -126,12 +126,37 @@ pipeline {
                 sh '''
                     echo "🔍 Starting SonarQube analysis..."
 
-                    docker run --rm \
-                        --network mr-jenk_default \
-                        -e SONAR_HOST_URL=http://sonarqube:9000 \
-                        -e SONAR_TOKEN="$SONAR_TOKEN" \
-                        -v "$WORKSPACE:/usr/src" \
-                        sonarsource/sonar-scanner-cli
+                    cd user_service
+                    ./mvnw clean verify \
+                      org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                      -Dsonar.projectKey=safe-zone-user \
+                      -Dsonar.projectName="safe-zone-user" \
+                      -Dsonar.host.url="$SONAR_HOST_URL" \
+                      -Dsonar.token="$SONAR_TOKEN"
+
+                    cd ../product_service
+                    ./mvnw clean verify \
+                      org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                      -Dsonar.projectKey=safe-zone-product \
+                      -Dsonar.projectName="safe-zone-product" \
+                      -Dsonar.host.url="$SONAR_HOST_URL" \
+                      -Dsonar.token="$SONAR_TOKEN"
+
+                    cd ../gateway_service
+                    ./mvnw clean verify \
+                      org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                      -Dsonar.projectKey=safe-zone-gateway \
+                      -Dsonar.projectName="safe-zone-gateway" \
+                      -Dsonar.host.url="$SONAR_HOST_URL" \
+                      -Dsonar.token="$SONAR_TOKEN"
+
+                    cd ../media_service
+                    ./mvnw clean verify \
+                      org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                      -Dsonar.projectKey=safe-zone-media \
+                      -Dsonar.projectName="safe-zone-media" \
+                      -Dsonar.host.url="$SONAR_HOST_URL" \
+                      -Dsonar.token="$SONAR_TOKEN"
                 '''
             }
         }
