@@ -113,6 +113,53 @@ pipeline {
     }
 }
         
+    stage('SonarQube - Frontend') {
+    agent {
+        docker {
+            image 'sonarsource/sonar-scanner-cli:latest'
+            reuseNode true
+        }
+    }
+
+    steps {
+        withSonarQubeEnv('SonarQube') {
+            withCredentials([
+                string(
+                    credentialsId: 'sonar-token',
+                    variable: 'SONAR_TOKEN'
+                )
+            ]) {
+                sh '''
+                    cd client
+
+                    sonar-scanner \
+                      -Dsonar.projectKey=safe-zone-client \
+                      -Dsonar.projectName="SafeZone Client" \
+                      -Dsonar.sources=src \
+                      -Dsonar.tests=src \
+                      -Dsonar.test.inclusions="**/*.spec.ts" \
+                      -Dsonar.exclusions="**/node_modules/**,**/dist/**" \
+                      -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+                      -Dsonar.host.url="$SONAR_HOST_URL" \
+                      -Dsonar.token="$SONAR_TOKEN"
+                '''
+            }
+        }
+    }
+}
+
+    stage('Quality Gate - Frontend') {
+
+    steps {
+
+        timeout(time: 10, unit: 'MINUTES') {
+
+            waitForQualityGate abortPipeline: true
+        }
+    }
+}
+
+
         stage('SonarQube - User Service') {
 
             steps {
@@ -130,6 +177,8 @@ pipeline {
                             echo "🔍 Analyzing User Service..."
 
                             cd user_service
+                            rm -f target/sonar/report-task.txt
+
 
                             chmod +x mvnw
 
@@ -182,6 +231,8 @@ pipeline {
                             echo "🔍 Analyzing Product Service..."
 
                             cd product_service
+                            rm -f target/sonar/report-task.txt
+
 
                             chmod +x mvnw
 
@@ -234,6 +285,7 @@ pipeline {
                             echo "🔍 Analyzing Gateway Service..."
 
                             cd gateway_service
+                            rm -f target/sonar/report-task.txt
 
                             chmod +x mvnw
 
@@ -286,7 +338,7 @@ pipeline {
                             echo "🔍 Analyzing Media Service..."
 
                             cd media_service
-
+                            rm -f target/sonar/report-task.txt
                             chmod +x mvnw
 
                             ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
@@ -296,6 +348,21 @@ pipeline {
                                 -Dsonar.token="$SONAR_TOKEN"
                         '''
                     }
+                }
+            }
+        }
+
+        // =========================================================
+        // QUALITY GATE - MEDIA
+        // =========================================================
+
+        stage('Quality Gate - Media Service') {
+
+            steps {
+
+                timeout(time: 10, unit: 'MINUTES') {
+
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
