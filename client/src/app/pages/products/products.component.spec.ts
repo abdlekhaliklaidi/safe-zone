@@ -21,8 +21,11 @@ describe('ProductsComponent', () => {
     ]);
 
     authService = jasmine.createSpyObj('AuthService', [
-      'getRole'
-    ]);
+  'getRole',
+  'getUserId'
+]);
+
+authService.getUserId.and.returnValue('user1');
 
     userService = {
       user$: of(null)
