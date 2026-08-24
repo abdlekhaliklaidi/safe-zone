@@ -113,57 +113,199 @@ pipeline {
     }
 }
         
-       stage('SonarQube Analysis') {
-    steps {
-        withSonarQubeEnv('SonarQube') {
-            withCredentials([
-                string(
-                    credentialsId: 'sonar-token',
-                    variable: 'SONAR_TOKEN'
-                )
-            ]) {
-                sh '''
-                    echo "🔍 Starting SonarQube analysis..."
+        stage('SonarQube - User Service') {
 
-                    cd user_service
-                    ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-                      -Dsonar.projectKey=safe-zone-user \
-                      -Dsonar.projectName="safe-zone-user" \
-                      -Dsonar.host.url="$SONAR_HOST_URL" \
-                      -Dsonar.token="$SONAR_TOKEN"
+            steps {
 
-                    cd ../product_service
-                    ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-                      -Dsonar.projectKey=safe-zone-product \
-                      -Dsonar.projectName="safe-zone-product" \
-                      -Dsonar.host.url="$SONAR_HOST_URL" \
-                      -Dsonar.token="$SONAR_TOKEN"
+                withSonarQubeEnv('SonarQube') {
 
-                    cd ../gateway_service
-                    ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-                      -Dsonar.projectKey=safe-zone-gateway \
-                      -Dsonar.projectName="safe-zone-gateway" \
-                      -Dsonar.host.url="$SONAR_HOST_URL" \
-                      -Dsonar.token="$SONAR_TOKEN"
+                    withCredentials([
+                        string(
+                            credentialsId: 'sonar-token',
+                            variable: 'SONAR_TOKEN'
+                        )
+                    ]) {
 
-                    cd ../media_service
-                    ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-                      -Dsonar.projectKey=safe-zone-media \
-                      -Dsonar.projectName="safe-zone-media" \
-                      -Dsonar.host.url="$SONAR_HOST_URL" \
-                      -Dsonar.token="$SONAR_TOKEN"
-                '''
+                        sh '''
+                            echo "🔍 Analyzing User Service..."
+
+                            cd user_service
+
+                            chmod +x mvnw
+
+                            ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                                -Dsonar.projectKey=safe-zone-user \
+                                -Dsonar.projectName="SafeZone User Service" \
+                                -Dsonar.host.url="$SONAR_HOST_URL" \
+                                -Dsonar.token="$SONAR_TOKEN"
+                        '''
+                    }
+                }
             }
         }
-    }
-}
 
 
         // =========================================================
-        // QUALITY GATE
+        // QUALITY GATE - USER
         // =========================================================
 
-        stage('Quality Gate') {
+        stage('Quality Gate - User Service') {
+
+            steps {
+
+                timeout(time: 10, unit: 'MINUTES') {
+
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+
+        // =========================================================
+        // SONARQUBE - PRODUCT SERVICE
+        // =========================================================
+
+        stage('SonarQube - Product Service') {
+
+            steps {
+
+                withSonarQubeEnv('SonarQube') {
+
+                    withCredentials([
+                        string(
+                            credentialsId: 'sonar-token',
+                            variable: 'SONAR_TOKEN'
+                        )
+                    ]) {
+
+                        sh '''
+                            echo "🔍 Analyzing Product Service..."
+
+                            cd product_service
+
+                            chmod +x mvnw
+
+                            ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                                -Dsonar.projectKey=safe-zone-product \
+                                -Dsonar.projectName="SafeZone Product Service" \
+                                -Dsonar.host.url="$SONAR_HOST_URL" \
+                                -Dsonar.token="$SONAR_TOKEN"
+                        '''
+                    }
+                }
+            }
+        }
+
+
+        // =========================================================
+        // QUALITY GATE - PRODUCT
+        // =========================================================
+
+        stage('Quality Gate - Product Service') {
+
+            steps {
+
+                timeout(time: 10, unit: 'MINUTES') {
+
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+
+        // =========================================================
+        // SONARQUBE - GATEWAY SERVICE
+        // =========================================================
+
+        stage('SonarQube - Gateway Service') {
+
+            steps {
+
+                withSonarQubeEnv('SonarQube') {
+
+                    withCredentials([
+                        string(
+                            credentialsId: 'sonar-token',
+                            variable: 'SONAR_TOKEN'
+                        )
+                    ]) {
+
+                        sh '''
+                            echo "🔍 Analyzing Gateway Service..."
+
+                            cd gateway_service
+
+                            chmod +x mvnw
+
+                            ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                                -Dsonar.projectKey=safe-zone-gateway \
+                                -Dsonar.projectName="SafeZone Gateway Service" \
+                                -Dsonar.host.url="$SONAR_HOST_URL" \
+                                -Dsonar.token="$SONAR_TOKEN"
+                        '''
+                    }
+                }
+            }
+        }
+
+
+        // =========================================================
+        // QUALITY GATE - GATEWAY
+        // =========================================================
+
+        stage('Quality Gate - Gateway Service') {
+
+            steps {
+
+                timeout(time: 10, unit: 'MINUTES') {
+
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+
+        // =========================================================
+        // SONARQUBE - MEDIA SERVICE
+        // =========================================================
+
+        stage('SonarQube - Media Service') {
+
+            steps {
+
+                withSonarQubeEnv('SonarQube') {
+
+                    withCredentials([
+                        string(
+                            credentialsId: 'sonar-token',
+                            variable: 'SONAR_TOKEN'
+                        )
+                    ]) {
+
+                        sh '''
+                            echo "🔍 Analyzing Media Service..."
+
+                            cd media_service
+
+                            chmod +x mvnw
+
+                            ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                                -Dsonar.projectKey=safe-zone-media \
+                                -Dsonar.projectName="SafeZone Media Service" \
+                                -Dsonar.host.url="$SONAR_HOST_URL" \
+                                -Dsonar.token="$SONAR_TOKEN"
+                        '''
+                    }
+                }
+            }
+        }
+
+
+        // =========================================================
+        // QUALITY GATE - MEDIA
+        // =========================================================
+
+        stage('Quality Gate - Media Service') {
 
             steps {
 
