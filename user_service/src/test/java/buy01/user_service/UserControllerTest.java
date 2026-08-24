@@ -14,7 +14,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 
 import java.util.Map;
 
@@ -146,8 +145,6 @@ class UserControllerTest {
 
     @Test
     void updateProfile() throws Exception {
-
-        ProfileRequest request = new ProfileRequest();
 
         ProfileResponse response = new ProfileResponse();
 
