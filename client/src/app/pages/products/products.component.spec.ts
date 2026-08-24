@@ -51,9 +51,25 @@ describe('ProductsComponent', () => {
   it('should load products', () => {
     productService.getAllProducts.and.returnValue(
       of([
-        { id: '1', name: 'Phone' },
-        { _id: '2', name: 'Laptop' }
-      ])
+  {
+    id: '1',
+    name: 'Phone',
+    description: 'Test phone',
+    price: 100,
+    quantity: 10,
+    userId: 'user1',
+    imageUrls: []
+  },
+  {
+    id: '2',
+    name: 'Laptop',
+    description: 'Test laptop',
+    price: 500,
+    quantity: 5,
+    userId: 'user1',
+    imageUrls: []
+  }
+])
     );
 
     component.loadProducts();
