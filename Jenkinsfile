@@ -15,7 +15,14 @@ pipeline {
             }
         }
 
-
+    stage('Clean Sonar Reports') {
+        steps {
+            sh '''
+                echo "🧹 Cleaning old SonarQube report-task.txt files..."
+                find . -name report-task.txt -delete
+            '''
+        }
+    }
 
         stage('Backend Tests') {
 
