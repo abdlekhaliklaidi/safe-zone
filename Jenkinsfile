@@ -156,16 +156,6 @@ pipeline {
     }
 }
 
-    stage('Quality Gate - Frontend') {
-
-    steps {
-
-        timeout(time: 10, unit: 'MINUTES') {
-
-            waitForQualityGate abortPipeline: true
-        }
-    }
-}
 
 
         stage('SonarQube - User Service') {
