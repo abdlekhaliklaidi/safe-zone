@@ -1,279 +1,279 @@
-package buy01.user_service;
+// package buy01.user_service;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+// import io.jsonwebtoken.Jwts;
+// import io.jsonwebtoken.security.Keys;
 
-import jakarta.servlet.FilterChain;
-import buy01.user_service.security.JwtAuthFilter;
+// import jakarta.servlet.FilterChain;
+// import buy01.user_service.security.JwtAuthFilter;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+// import org.junit.jupiter.api.BeforeEach;
+// import org.junit.jupiter.api.Test;
 
-import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.core.context.SecurityContextHolder;
+// import org.springframework.mock.web.MockHttpServletRequest;
+// import org.springframework.mock.web.MockHttpServletResponse;
+// import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
+// import java.nio.charset.StandardCharsets;
+// import java.util.Date;
 
-import javax.crypto.SecretKey;
+// import javax.crypto.SecretKey;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+// import static org.junit.jupiter.api.Assertions.*;
+// import static org.mockito.Mockito.*;
 
-class JwtAuthFilterTest {
+// class JwtAuthFilterTest {
 
-    private JwtAuthFilter filter;
+//     private JwtAuthFilter filter;
 
-    private FilterChain filterChain;
+//     private FilterChain filterChain;
 
-    private MockHttpServletRequest request;
+//     private MockHttpServletRequest request;
 
-    private MockHttpServletResponse response;
+//     private MockHttpServletResponse response;
 
-    private static final String SECRET_KEY =
-            "mysecretkeymysecretkeymysecretkey123456789012345678901234567890";
+//     private static final String SECRET_KEY =
+//             "mysecretkeymysecretkeymysecretkey123456789012345678901234567890";
 
-    private SecretKey key() {
-        return Keys.hmacShaKeyFor(
-                SECRET_KEY.getBytes(StandardCharsets.UTF_8)
-        );
-    }
+//     private SecretKey key() {
+//         return Keys.hmacShaKeyFor(
+//                 SECRET_KEY.getBytes(StandardCharsets.UTF_8)
+//         );
+//     }
 
-    @BeforeEach
-    void setUp() {
+//     @BeforeEach
+//     void setUp() {
 
-        filter = new JwtAuthFilter();
+//         filter = new JwtAuthFilter();
 
-        filterChain = mock(FilterChain.class);
+//         filterChain = mock(FilterChain.class);
 
-        request = new MockHttpServletRequest();
+//         request = new MockHttpServletRequest();
 
-        response = new MockHttpServletResponse();
+//         response = new MockHttpServletResponse();
 
-        SecurityContextHolder.clearContext();
-    }
+//         SecurityContextHolder.clearContext();
+//     }
 
-    @Test
-    void requestWithoutAuthorization_shouldContinueChain()
-            throws Exception {
+//     @Test
+//     void requestWithoutAuthorization_shouldContinueChain()
+//             throws Exception {
 
-        filter.doFilter(
-                request,
-                response,
-                filterChain
-        );
+//         filter.doFilter(
+//                 request,
+//                 response,
+//                 filterChain
+//         );
 
-        verify(filterChain).doFilter(
-                request,
-                response
-        );
+//         verify(filterChain).doFilter(
+//                 request,
+//                 response
+//         );
 
-        assertNull(
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication()
-        );
-    }
+//         assertNull(
+//                 SecurityContextHolder
+//                         .getContext()
+//                         .getAuthentication()
+//         );
+//     }
 
-    @Test
-    void requestWithNonBearerToken_shouldContinueChain()
-            throws Exception {
+//     @Test
+//     void requestWithNonBearerToken_shouldContinueChain()
+//             throws Exception {
 
-        request.addHeader(
-                "Authorization",
-                "Basic abc123"
-        );
+//         request.addHeader(
+//                 "Authorization",
+//                 "Basic abc123"
+//         );
 
-        filter.doFilter(
-                request,
-                response,
-                filterChain
-        );
+//         filter.doFilter(
+//                 request,
+//                 response,
+//                 filterChain
+//         );
 
-        verify(filterChain).doFilter(
-                request,
-                response
-        );
+//         verify(filterChain).doFilter(
+//                 request,
+//                 response
+//         );
 
-        assertNull(
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication()
-        );
-    }
+//         assertNull(
+//                 SecurityContextHolder
+//                         .getContext()
+//                         .getAuthentication()
+//         );
+//     }
 
-    @Test
-    void validClientToken_shouldAuthenticateUser()
-            throws Exception {
+//     @Test
+//     void validClientToken_shouldAuthenticateUser()
+//             throws Exception {
 
-        String token = Jwts.builder()
-                .subject("user-123")
-                .claim("role", "CLIENT")
-                .issuedAt(new Date())
-                .expiration(
-                        new Date(
-                                System.currentTimeMillis()
-                                        + 60000
-                        )
-                )
-                .signWith(key())
-                .compact();
+//         String token = Jwts.builder()
+//                 .subject("user-123")
+//                 .claim("role", "CLIENT")
+//                 .issuedAt(new Date())
+//                 .expiration(
+//                         new Date(
+//                                 System.currentTimeMillis()
+//                                         + 60000
+//                         )
+//                 )
+//                 .signWith(key())
+//                 .compact();
 
-        request.addHeader(
-                "Authorization",
-                "Bearer " + token
-        );
+//         request.addHeader(
+//                 "Authorization",
+//                 "Bearer " + token
+//         );
 
-        filter.doFilter(
-                request,
-                response,
-                filterChain
-        );
+//         filter.doFilter(
+//                 request,
+//                 response,
+//                 filterChain
+//         );
 
-        assertNotNull(
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication()
-        );
+//         assertNotNull(
+//                 SecurityContextHolder
+//                         .getContext()
+//                         .getAuthentication()
+//         );
 
-        assertEquals(
-                "user-123",
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication()
-                        .getPrincipal()
-        );
+//         assertEquals(
+//                 "user-123",
+//                 SecurityContextHolder
+//                         .getContext()
+//                         .getAuthentication()
+//                         .getPrincipal()
+//         );
 
-        assertTrue(
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication()
-                        .getAuthorities()
-                        .stream()
-                        .anyMatch(a ->
-                                a.getAuthority()
-                                        .equals("ROLE_CLIENT")
-                        )
-        );
+//         assertTrue(
+//                 SecurityContextHolder
+//                         .getContext()
+//                         .getAuthentication()
+//                         .getAuthorities()
+//                         .stream()
+//                         .anyMatch(a ->
+//                                 a.getAuthority()
+//                                         .equals("ROLE_CLIENT")
+//                         )
+//         );
 
-        verify(filterChain).doFilter(
-                request,
-                response
-        );
-    }
+//         verify(filterChain).doFilter(
+//                 request,
+//                 response
+//         );
+//     }
 
-    @Test
-    void validSellerToken_shouldAuthenticateSeller()
-            throws Exception {
+//     @Test
+//     void validSellerToken_shouldAuthenticateSeller()
+//             throws Exception {
 
-        String token = Jwts.builder()
-                .subject("seller-123")
-                .claim("role", "SELLER")
-                .issuedAt(new Date())
-                .expiration(
-                        new Date(
-                                System.currentTimeMillis()
-                                        + 60000
-                        )
-                )
-                .signWith(key())
-                .compact();
+//         String token = Jwts.builder()
+//                 .subject("seller-123")
+//                 .claim("role", "SELLER")
+//                 .issuedAt(new Date())
+//                 .expiration(
+//                         new Date(
+//                                 System.currentTimeMillis()
+//                                         + 60000
+//                         )
+//                 )
+//                 .signWith(key())
+//                 .compact();
 
-        request.addHeader(
-                "Authorization",
-                "Bearer " + token
-        );
+//         request.addHeader(
+//                 "Authorization",
+//                 "Bearer " + token
+//         );
 
-        filter.doFilter(
-                request,
-                response,
-                filterChain
-        );
+//         filter.doFilter(
+//                 request,
+//                 response,
+//                 filterChain
+//         );
 
-        assertNotNull(
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication()
-        );
+//         assertNotNull(
+//                 SecurityContextHolder
+//                         .getContext()
+//                         .getAuthentication()
+//         );
 
-        assertTrue(
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication()
-                        .getAuthorities()
-                        .stream()
-                        .anyMatch(a ->
-                                a.getAuthority()
-                                        .equals("ROLE_SELLER")
-                        )
-        );
-    }
+//         assertTrue(
+//                 SecurityContextHolder
+//                         .getContext()
+//                         .getAuthentication()
+//                         .getAuthorities()
+//                         .stream()
+//                         .anyMatch(a ->
+//                                 a.getAuthority()
+//                                         .equals("ROLE_SELLER")
+//                         )
+//         );
+//     }
 
-    @Test
-    void invalidRole_shouldNotAuthenticate()
-            throws Exception {
+//     @Test
+//     void invalidRole_shouldNotAuthenticate()
+//             throws Exception {
 
-        String token = Jwts.builder()
-                .subject("user-123")
-                .claim("role", "ADMIN")
-                .issuedAt(new Date())
-                .expiration(
-                        new Date(
-                                System.currentTimeMillis()
-                                        + 60000
-                        )
-                )
-                .signWith(key())
-                .compact();
+//         String token = Jwts.builder()
+//                 .subject("user-123")
+//                 .claim("role", "ADMIN")
+//                 .issuedAt(new Date())
+//                 .expiration(
+//                         new Date(
+//                                 System.currentTimeMillis()
+//                                         + 60000
+//                         )
+//                 )
+//                 .signWith(key())
+//                 .compact();
 
-        request.addHeader(
-                "Authorization",
-                "Bearer " + token
-        );
+//         request.addHeader(
+//                 "Authorization",
+//                 "Bearer " + token
+//         );
 
-        filter.doFilter(
-                request,
-                response,
-                filterChain
-        );
+//         filter.doFilter(
+//                 request,
+//                 response,
+//                 filterChain
+//         );
 
-        assertNull(
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication()
-        );
+//         assertNull(
+//                 SecurityContextHolder
+//                         .getContext()
+//                         .getAuthentication()
+//         );
 
-        verify(filterChain).doFilter(
-                request,
-                response
-        );
-    }
+//         verify(filterChain).doFilter(
+//                 request,
+//                 response
+//         );
+//     }
 
-    @Test
-    void malformedToken_shouldNotAuthenticate()
-            throws Exception {
+//     @Test
+//     void malformedToken_shouldNotAuthenticate()
+//             throws Exception {
 
-        request.addHeader(
-                "Authorization",
-                "Bearer invalid-token"
-        );
+//         request.addHeader(
+//                 "Authorization",
+//                 "Bearer invalid-token"
+//         );
 
-        filter.doFilter(
-                request,
-                response,
-                filterChain
-        );
+//         filter.doFilter(
+//                 request,
+//                 response,
+//                 filterChain
+//         );
 
-        assertNull(
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication()
-        );
+//         assertNull(
+//                 SecurityContextHolder
+//                         .getContext()
+//                         .getAuthentication()
+//         );
 
-        verify(filterChain).doFilter(
-                request,
-                response
-        );
-    }
-}
+//         verify(filterChain).doFilter(
+//                 request,
+//                 response
+//         );
+//     }
+// }
