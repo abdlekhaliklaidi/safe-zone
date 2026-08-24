@@ -118,6 +118,7 @@ pipeline {
         docker {
             image 'sonarsource/sonar-scanner-cli:latest'
             reuseNode true
+            args '--network=mr-jenk_default'
         }
     }
 
@@ -367,7 +368,7 @@ pipeline {
             }
         }
 
-        
+
         stage('Docker Build') {
     steps {
         sh '''
