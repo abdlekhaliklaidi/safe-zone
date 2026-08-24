@@ -1,3 +1,4 @@
+# safe-zone
 # 01E-COM - E-Commerce Microservices Platform
 
 01E-COM is a modern e-commerce platform built using a microservices architecture. The application provides secure authentication, product management, image uploading, and API gateway routing while demonstrating scalable backend development using Spring Boot and Angular.
@@ -74,6 +75,24 @@ npm ci
 CI=true npx ng test \
  --watch=false \
  --browsers=ChromeHeadlessCI
+
+# ⚙️ 4. Configuration SonarQube
+
+Créer sonar-project.properties à la racine du projet :
+
+sonar.projectKey=safe-zone
+sonar.projectName=Safe-Zone
+sonar.sources=.
+sonar.sourceEncoding=UTF-8
+
+Adapter sonar.sources à la structure réelle du projet.
+
+Exemple pour plusieurs microservices :
+
+sonar.projectKey=safe-zone
+sonar.projectName=Safe-Zone
+sonar.sources=microservices
+sonar.sourceEncoding=UTF-8
 
 # 🐳 Docker Build
 
@@ -191,6 +210,8 @@ mongorestore \
 |__ Dockerfile.jenkins
 |
 |__ Jenkinsfile
+|
+|__ sonar-project.properties
 │
 └── README.md
 ```

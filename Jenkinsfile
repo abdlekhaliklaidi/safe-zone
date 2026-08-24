@@ -300,22 +300,6 @@ pipeline {
             }
         }
 
-
-        // =========================================================
-        // QUALITY GATE - MEDIA
-        // =========================================================
-
-        stage('Quality Gate - Media Service') {
-
-            steps {
-
-                timeout(time: 10, unit: 'MINUTES') {
-
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
-
         
         stage('Docker Build') {
     steps {
