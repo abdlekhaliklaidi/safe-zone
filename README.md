@@ -1,5 +1,4 @@
-# safe-zone
-# safe-zone (01E-COM - E-Commerce Microservices Platform)
+# safe-zone: SonarQube (01E-COM - E-Commerce Microservices Platform)
 
 01E-COM is a modern e-commerce platform built using a microservices architecture. The application provides secure authentication, product management, image uploading, and API gateway routing while demonstrating scalable backend development using Spring Boot and Angular.
 
