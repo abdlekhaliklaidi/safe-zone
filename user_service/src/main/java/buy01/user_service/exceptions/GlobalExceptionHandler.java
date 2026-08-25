@@ -16,9 +16,14 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import io.jsonwebtoken.JwtException;
 
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log =
+        LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     // 1. Combine DTO validation errors into one clean global string
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -96,7 +101,8 @@ public class GlobalExceptionHandler {
     // 9. Catch-all for unexpected exceptions
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAll(Exception ex) {
-        ex.printStackTrace();
+        // ex.printStackTrace();
+        log.error("Unexpected error occurred while processing request", ex);
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse("Something went wrong. Please try again later."));

@@ -2,7 +2,6 @@ package buy01.user_service.controller;
 
 import buy01.user_service.dto.ProfileRequest;
 import buy01.user_service.dto.ProfileResponse;
-import buy01.user_service.model.Role;
 import buy01.user_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import jakarta.validation.Valid;
