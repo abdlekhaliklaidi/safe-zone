@@ -20,21 +20,8 @@ import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-// import org.springframework.beans.factory.annotation.Value;
 
 public class JwtAuthFilter extends OncePerRequestFilter {
-
-    // private final String secretKey;
-
-    // public JwtAuthFilter(@Value("${jwt.secret}") String secretKey) {
-    //     this.secretKey = secretKey;
-    // }
-
-    // private SecretKey getSigningKey() {
-    //     return Keys.hmacShaKeyFor(
-    //         secretKey.getBytes(StandardCharsets.UTF_8)
-    //     );
-    // }
 
     // Must match the key used in JwtUtil (at least 32 characters for HS256)
     private static final String SECRET_KEY =

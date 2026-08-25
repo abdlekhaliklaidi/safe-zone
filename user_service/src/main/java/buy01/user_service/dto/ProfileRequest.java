@@ -1,8 +1,10 @@
 package buy01.user_service.dto;
 
+import com.mongodb.lang.NonNull;
 
 import buy01.user_service.model.Role;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Data;
