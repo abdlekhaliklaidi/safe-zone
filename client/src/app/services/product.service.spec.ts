@@ -1,19 +1,29 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
 import {
-  provideHttpClient,
   HttpTestingController,
   provideHttpClientTesting
 } from '@angular/common/http/testing';
 
 import { ProductService } from './product.service';
 import { AuthService } from './auth.service';
+import { Product } from '../models/product';
 import { environment } from '../../environments/environment';
 
 describe('ProductService', () => {
   let service: ProductService;
   let httpMock: HttpTestingController;
-
   let authService: jasmine.SpyObj<AuthService>;
+
+  const product: Product = {
+    id: '1',
+    name: 'Phone',
+    description: 'Test phone',
+    price: 100,
+    quantity: 10,
+    userId: 'user1',
+    imageUrls: []
+  };
 
   beforeEach(() => {
     authService = jasmine.createSpyObj('AuthService', [
@@ -46,15 +56,8 @@ describe('ProductService', () => {
   });
 
   it('should get all products', () => {
-    const products: any[] = [
-      {
-        id: '1',
-        name: 'Phone'
-      }
-    ];
-
     service.getAllProducts().subscribe(result => {
-      expect(result).toEqual(products);
+      expect(result).toEqual([product]);
     });
 
     const req = httpMock.expectOne(
@@ -62,16 +65,10 @@ describe('ProductService', () => {
     );
 
     expect(req.request.method).toBe('GET');
-
-    req.flush(products);
+    req.flush([product]);
   });
 
   it('should get product by id', () => {
-    const product = {
-      id: '1',
-      name: 'Phone'
-    };
-
     service.getProduct('1').subscribe(result => {
       expect(result).toEqual(product);
     });
@@ -81,16 +78,10 @@ describe('ProductService', () => {
     );
 
     expect(req.request.method).toBe('GET');
-
     req.flush(product);
   });
 
   it('should get product using getProductById', () => {
-    const product = {
-      id: '1',
-      name: 'Phone'
-    };
-
     service.getProductById('1').subscribe(result => {
       expect(result).toEqual(product);
     });
@@ -100,18 +91,12 @@ describe('ProductService', () => {
     );
 
     expect(req.request.method).toBe('GET');
-
     req.flush(product);
   });
 
   it('should create product with user headers', () => {
     const formData = new FormData();
     formData.append('name', 'Phone');
-
-    const product = {
-      id: '1',
-      name: 'Phone'
-    };
 
     service.createProduct(formData).subscribe(result => {
       expect(result).toEqual(product);
@@ -131,7 +116,9 @@ describe('ProductService', () => {
   it('should update product', () => {
     const formData = new FormData();
 
-    service.updateProduct('1', formData).subscribe();
+    service.updateProduct('1', formData).subscribe(result => {
+      expect(result).toEqual(product);
+    });
 
     const req = httpMock.expectOne(
       `${environment.apiUrl}/api/products/1`
@@ -141,10 +128,7 @@ describe('ProductService', () => {
     expect(req.request.headers.get('X-User-Id')).toBe('user1');
     expect(req.request.headers.get('X-Role')).toBe('SELLER');
 
-    req.flush({
-      id: '1',
-      name: 'Updated'
-    });
+    req.flush(product);
   });
 
   it('should delete product', () => {
@@ -176,9 +160,6 @@ describe('ProductService', () => {
     expect(req.request.headers.get('X-User-Id')).toBe('');
     expect(req.request.headers.get('X-Role')).toBe('CLIENT');
 
-    req.flush({
-      id: '1',
-      name: 'Phone'
-    });
+    req.flush(product);
   });
 });
