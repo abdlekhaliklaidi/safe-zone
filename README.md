@@ -95,6 +95,7 @@ sonar.sourceEncoding=UTF-8
 
 # 🐳 Docker Build
 
+
 The pipeline generates environment variables and builds all Docker images:
 
 docker compose --env-file .env build
